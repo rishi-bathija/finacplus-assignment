@@ -29,18 +29,18 @@ module.exports = {
         new ModuleFederationPlugin({
             name: "mainApp",
             remotes: {
-                musicApp: "musicApp@http://localhost:3001/remoteEntry.js",
+                musicApp: "musicApp@https://music-library-drab-tau.vercel.app/remoteEntry.js",
             },
             shared: {
                 react: {
                     singleton: true,
                     requiredVersion: "^18.2.0",
-                    eager: true, // Eager loading for React
+                    eager: true,
                 },
                 "react-dom": {
                     singleton: true,
                     requiredVersion: "^18.2.0",
-                    eager: true, // Eager loading for ReactDOM
+                    eager: true,
                 },
             },
         }),
