@@ -27,12 +27,10 @@ const App = () => {
                     Logout
                 </button>
             </header>
-            <main className="flex justify-center items-start">
-                <div className="w-full max-w-2xl">
-                    <Suspense fallback={<div className="text-center text-blue-600">Loading Music Library...</div>}>
-                        <MusicLibrary role={user.role} />
-                    </Suspense>
-                </div>
+            <main className="p-4">
+                <Suspense fallback={<div className="text-center text-blue-600">Loading Music Library...</div>}>
+                    <MusicLibrary role={user.role} />
+                </Suspense>
             </main>
         </div>
     )

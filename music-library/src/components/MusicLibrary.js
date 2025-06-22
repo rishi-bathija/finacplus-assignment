@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from "react";
 
+
 const defaultSongs = [
     { title: "Numb", artist: "Linkin Park", album: "Meteora" },
+    { title: "Breaking the Habit", artist: "Linkin Park", album: "Meteora" },
     { title: "Blinding Lights", artist: "The Weeknd", album: "After Hours" },
     { title: "Photograph", artist: "Ed Sheeran", album: "x" },
 ];
@@ -12,6 +14,12 @@ const MusicLibrary = ({ role }) => {
     const [songs, setSongs] = useState(defaultSongs);
     const [filter, setFilter] = useState("");
     const [sortBy, setSortBy] = useState("title");
+    const [groupByAlbum, setGroupByAlbum] = useState(false);
+    const [openAlbums, setOpenAlbums] = useState({});
+    // Modal state
+    const [showModal, setShowModal] = useState(false);
+    const [newSong, setNewSong] = useState({ title: "", artist: "", album: "" });
+    const [modalError, setModalError] = useState("");
 
     const filteredSongs = useMemo(() => {
         return songs
@@ -24,16 +32,40 @@ const MusicLibrary = ({ role }) => {
             .sort((a, b) => a[sortBy].localeCompare(b[sortBy]));
     }, [songs, filter, sortBy]);
 
-    const addSong = () => {
-        const title = prompt("Enter title");
-        const artist = prompt("Enter artist");
-        const album = prompt("Enter album");
-        if (title && artist && album)
-            setSongs([...songs, { title, artist, album }]);
+
+    const groupedSongs = useMemo(() => {
+        return filteredSongs.reduce((acc, song) => {
+            if (!acc[song.album]) acc[song.album] = [];
+            acc[song.album].push(song);
+            return acc;
+        }, {});
+    }, [filteredSongs]);
+
+    // Remove old addSong and replace with modal logic
+    const openAddSongModal = () => {
+        setNewSong({ title: "", artist: "", album: "" });
+        setModalError("");
+        setShowModal(true);
+    };
+    const closeAddSongModal = () => {
+        setShowModal(false);
+        setModalError("");
+    };
+    const handleAddSong = () => {
+        if (!newSong.title.trim() || !newSong.artist.trim() || !newSong.album.trim()) {
+            setModalError("All fields are required.");
+            return;
+        }
+        setSongs([...songs, { ...newSong }]);
+        setShowModal(false);
     };
 
     const deleteSong = (title) => {
         setSongs(songs.filter((s) => s.title !== title));
+    };
+
+    const toggleAlbum = (album) => {
+        setOpenAlbums((prev) => ({ ...prev, [album]: !prev[album] }));
     };
 
     return (
@@ -63,41 +95,128 @@ const MusicLibrary = ({ role }) => {
                     <option value="album">Sort by Album</option>
                 </select>
 
+                <label className="flex items-center gap-2">
+                    <input
+                        type="checkbox"
+                        checked={groupByAlbum}
+                        onChange={() => setGroupByAlbum((prev) => !prev)}
+                    />
+                    Group by Album
+                </label>
+
                 {isAdmin && (
                     <button
-                        className="px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-400 text-white rounded-lg font-semibold shadow hover:from-blue-700 hover:to-blue-500 transition"
-                        onClick={addSong}
+                        className="px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-400 text-white rounded-lg font-semibold shadow hover:from-blue-700 hover:to-blue-500 transition w-full"
+                        onClick={openAddSongModal}
                     >
-                        ➕ Add Song
+                        Add Song
                     </button>
                 )}
             </div>
 
-            <ul className="space-y-4 mt-4">
-                {filteredSongs.length === 0 && (
-                    <li className="text-gray-400 italic text-center">No songs found.</li>
-                )}
-                {filteredSongs.map((song, index) => (
-                    <li
-                        key={index}
-                        className="p-4 border border-blue-100 rounded-xl flex justify-between items-center bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 transition shadow"
-                    >
-                        <span>
-                            <strong className="text-blue-900">{song.title}</strong>
-                            <span className="text-gray-700"> – {song.artist}</span>
-                            <span className="text-gray-500"> ({song.album})</span>
-                        </span>
-                        {isAdmin && (
-                            <button
-                                className="text-red-600 hover:text-red-800 font-bold px-3 py-1 rounded transition bg-red-50 hover:bg-red-100"
-                                onClick={() => deleteSong(song.title)}
-                            >
-                                🗑 Delete
-                            </button>
+            {groupByAlbum ? (
+                Object.entries(groupedSongs).map(([album, tracks]) => (
+                    <div key={album} className="border rounded mb-3">
+                        <div
+                            className="p-3 bg-gray-100 font-semibold cursor-pointer"
+                            onClick={() => toggleAlbum(album)}
+                        >
+                            📀 {album} ({tracks.length} track{tracks.length > 1 ? "s" : ""})
+                        </div>
+                        {openAlbums[album] && (
+                            <ul className="p-3 space-y-2">
+                                {tracks.map((song, index) => (
+                                    <li
+                                        key={index}
+                                        className="flex justify-between items-center border-b pb-1"
+                                    >
+                                        <span>
+                                            <strong>{song.title}</strong> — {song.artist}
+                                        </span>
+                                        {isAdmin && (
+                                            <button
+                                                className="text-red-500 hover:underline"
+                                                onClick={() => deleteSong(song.title)}
+                                            >
+                                                🗑 Delete
+                                            </button>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
                         )}
-                    </li>
-                ))}
-            </ul>
+                    </div>
+                ))
+            ) : (
+                <ul className="space-y-2">
+                    {filteredSongs.map((song, index) => (
+                        <li
+                            key={index}
+                            className="p-2 border rounded flex justify-between items-center"
+                        >
+                            <span>
+                                <strong>{song.title}</strong> — {song.artist} ({song.album})
+                            </span>
+                            {isAdmin && (
+                                <button
+                                    className="text-red-500 hover:underline"
+                                    onClick={() => deleteSong(song.title)}
+                                >
+                                    🗑 Delete
+                                </button>
+                            )}
+                        </li>
+                    ))}
+                </ul>
+            )}
+
+            {/* Modal for adding a new song */}
+            {showModal && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+                    <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative">
+                        <h3 className="text-2xl font-bold mb-4 text-blue-700">Add New Song</h3>
+                        <div className="flex flex-col gap-4">
+                            <input
+                                type="text"
+                                placeholder="Title"
+                                className="p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                value={newSong.title}
+                                onChange={e => setNewSong({ ...newSong, title: e.target.value })}
+                                autoFocus
+                            />
+                            <input
+                                type="text"
+                                placeholder="Artist"
+                                className="p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                value={newSong.artist}
+                                onChange={e => setNewSong({ ...newSong, artist: e.target.value })}
+                            />
+                            <input
+                                type="text"
+                                placeholder="Album"
+                                className="p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                value={newSong.album}
+                                onChange={e => setNewSong({ ...newSong, album: e.target.value })}
+                            />
+                            {modalError && <div className="text-red-500 text-sm">{modalError}</div>}
+                            <div className="flex gap-4 mt-2">
+                                <button
+                                    className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-blue-400 text-white rounded-lg font-semibold shadow hover:from-blue-700 hover:to-blue-500 transition"
+                                    onClick={handleAddSong}
+                                >
+                                    Add
+                                </button>
+                                <button
+                                    className="flex-1 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold shadow hover:bg-gray-300 transition"
+                                    onClick={closeAddSongModal}
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
