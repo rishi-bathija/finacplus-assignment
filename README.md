@@ -11,90 +11,70 @@ This project demonstrates a working Microfrontend architecture using React and W
 
 ---
 
-## ✅ How to Run Locally
+## 🚀 How to Run Locally
 
-### 1. Clone the repo
+1. **Clone the repo**
+   ```bash
+   git clone https://github.com/rishi-bathija/finacplus-assignment.git
+   cd finacplus-assignment
+   ```
+2. **Start music-library (Remote App)**
+   ```bash
+   cd music-library
+   npm install
+   npm start
+   ```
+   This runs the remote microfrontend on [http://localhost:3001](http://localhost:3001)
 
-```bash
-git clone https://github.com/rishi-bathija/finacplus-assignment.git
-cd finacplus-assignment
+3. **Start main-app (Host App)**
+   ```bash
+   cd ../main-app
+   npm install
+   npm start
+   ```
+   This runs the host application on [http://localhost:3000](http://localhost:3000)
 
-2. Start music-library (Remote App)
+---
 
-cd music-library
-npm install
-npm start
-
-    This runs the remote microfrontend on http://localhost:3001
-
-3. Start main-app (Host App)
-
-cd ../main-app
-npm install
-npm start
-
-    This runs the host application on http://localhost:3000
-
-🔐 Demo Credentials
-Role	Username	Password
-Admin	admin	admin123
-User	user	user123
-
-    These credentials are stored and decoded from localStorage (in-memory JWT style).
-
-✨ Features
-🎯 Microfrontend Setup
-
-    Remote app (music-library) exposes MusicLibrary component via Webpack Module Federation
-
-    Host app (main-app) dynamically loads the remote at runtime
-
-🎵 Music Library UI
-
-    Search by title, artist, or album
-
-    Sort dropdown (Title, Artist, Album)
-
-    Group by Album using .reduce() with accordion toggles
-
-    Admin-only Add/Delete buttons (UI control based on role)
-
-    Fully responsive and styled using Tailwind CSS
-
-🧩 Role-Based Access
-
-    Simple login form in host app
-
-    Stores a base64-encoded JWT-style token in localStorage
-
-    Parses and extracts role from token
-
-    UI controls are rendered based on role (admin or user)
-
-🛠 How It Was Deployed (Vercel)
+## 🌐 How It Was Deployed
 
 Both apps are deployed separately using Vercel as two projects from the same monorepo:
-🔗 Live Links
-App	URL
-Main App	https://main-app-teal.vercel.app/
-Music Library (remote)	https://music-library-drab-tau.vercel.app/
 
-In main-app/webpack.config.js, the remote is referenced like this:
+| App         | URL                                                      |
+|-------------|----------------------------------------------------------|
+| Main App    | https://main-app-teal.vercel.app/                        |
+| Music Library (remote) | https://music-library-drab-tau.vercel.app/    |
 
+In `main-app/webpack.config.js`, the remote is referenced like this:
+```js
 remotes: {
   musicApp: "musicApp@https://music-library-drab-tau.vercel.app/remoteEntry.js"
 }
+```
+**Note:** Deploy `music-library` first, then `main-app`.
 
-    ⚠️ Ensure music-library is deployed before deploying main-app.
+---
 
-🧠 How Microfrontend & Role Auth Work
+## 🔐 Credentials for Demo
 
-    music-library exposes MusicLibrary via remoteEntry.js
+| Role  | Username | Password  |
+|-------|----------|-----------|
+| Admin | admin    | admin123  |
+| User  | user     | user123   |
 
-    main-app loads it with Webpack Module Federation
+These credentials are stored and decoded from localStorage (in-memory JWT style).
 
-    Auth is handled completely in main-app using localStorage and a simple JWT pattern
+---
 
-    The role is passed as a prop to MusicLibrary
+## 🧠 Explanation: Micro Frontend & Role-Based Auth
 
-    The microfrontend uses that prop to conditionally render Add/Delete buttons
+- **Micro Frontend:**
+  - `music-library` exposes the `MusicLibrary` component via `remoteEntry.js` using Webpack Module Federation.
+  - `main-app` loads this remote component at runtime and renders it as part of its UI.
+- **Role-Based Authentication:**
+  - Auth is handled in `main-app` using a simple login form.
+  - On login, a base64-encoded token (JWT-style) is stored in localStorage, containing the username and role.
+  - The role is extracted from the token and passed as a prop to the remote `MusicLibrary` component.
+  - The microfrontend uses this prop to conditionally render admin-only features (Add/Delete buttons).
+
+---
